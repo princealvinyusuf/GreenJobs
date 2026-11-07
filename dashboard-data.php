@@ -11,30 +11,26 @@ function text(mixed $value): string
 
 function category(array $row): string
 {
-    $values = [
-        text($row['kategori_green'] ?? ''),
-        text($row['kategori_gti_narrow'] ?? ''),
-        text($row['kategori_gti_broad'] ?? ''),
-    ];
-    $label = strtolower(implode(' ', $values));
-
-    if (preg_match('/potens|potential|broad/', $label)) {
-        return 'p';
-    }
-    if (preg_match('/non[\s_-]*(green|hijau)|tidak[\s_-]*(green|hijau)/', $label)) {
+    $green = strtolower(text($row['kategori_green'] ?? ''));
+    if (preg_match('/non[\s_-]*(green|hijau)|tidak[\s_-]*(green|hijau)/', $green)) {
         return 'n';
     }
-    if (preg_match('/green|hijau|narrow|murni/', $label)) {
+    if (preg_match('/potens|potential|broad/', $green)) {
+        return 'p';
+    }
+    if (preg_match('/green|hijau|narrow|murni/', $green)) {
         return 'g';
     }
 
+    $narrowLabel = strtolower(text($row['kategori_gti_narrow'] ?? ''));
+    $broadLabel = strtolower(text($row['kategori_gti_broad'] ?? ''));
     $narrow = strtolower(text($row['gti_narrow'] ?? ''));
     $broad = strtolower(text($row['GTI_broad'] ?? ''));
     $isYes = static fn(string $v): bool => in_array($v, ['1', 'ya', 'yes', 'true', 'y'], true);
-    if ($isYes($narrow)) {
+    if ($isYes($narrow) || preg_match('/green|hijau|narrow|murni/', $narrowLabel)) {
         return 'g';
     }
-    if ($isYes($broad)) {
+    if ($isYes($broad) || preg_match('/potens|potential|broad|green|hijau/', $broadLabel)) {
         return 'p';
     }
     return 'n';
@@ -151,9 +147,12 @@ try {
 
         $provinces[$province] ??= ['g' => 0, 'p' => 0];
         $provinces[$province][$cat] += $quota;
-        $cities[$province][$city] ??= ['quota' => 0, 'applicants' => 0];
-        $cities[$province][$city]['quota'] += $quota;
-        $cities[$province][$city]['applicants'] += $applicants;
+        $cities[$province][$city] ??= [
+            'g' => ['quota' => 0, 'applicants' => 0],
+            'p' => ['quota' => 0, 'applicants' => 0],
+        ];
+        $cities[$province][$city][$cat]['quota'] += $quota;
+        $cities[$province][$city][$cat]['applicants'] += $applicants;
 
         add($gender[$cat], text($row['jenis_kelamin']) ?: 'Tidak diketahui', $quota);
         add($physical[$cat], text($row['kondisi']) ?: 'Tidak diketahui', $quota);
@@ -184,12 +183,24 @@ try {
     }
     usort($PV, static fn(array $a, array $b): int => $b[2] <=> $a[2]);
 
-    $KB = [];
+    $KB = ['g' => [], 'p' => [], 'c' => []];
     foreach ($cities as $province => $provinceCities) {
-        uasort($provinceCities, static fn(array $a, array $b): int => $b['quota'] <=> $a['quota']);
-        foreach (array_slice($provinceCities, 0, 5, true) as $name => $value) {
-            if ($value['quota'] > 0) {
-                $KB[$province][] = [
+        foreach (['g', 'p', 'c'] as $cat) {
+            $values = [];
+            foreach ($provinceCities as $name => $value) {
+                $quota = $cat === 'c'
+                    ? $value['g']['quota'] + $value['p']['quota']
+                    : $value[$cat]['quota'];
+                $applicants = $cat === 'c'
+                    ? $value['g']['applicants'] + $value['p']['applicants']
+                    : $value[$cat]['applicants'];
+                if ($quota > 0) {
+                    $values[$name] = ['quota' => $quota, 'applicants' => $applicants];
+                }
+            }
+            uasort($values, static fn(array $a, array $b): int => $b['quota'] <=> $a['quota']);
+            foreach (array_slice($values, 0, 5, true) as $name => $value) {
+                $KB[$cat][$province][] = [
                     $name,
                     $value['quota'],
                     number_format($value['applicants'] / $value['quota'], 1, ',', '.'),
@@ -198,7 +209,7 @@ try {
         }
     }
 
-    $distribution = static function (array $values, array $patterns, int $total): array {
+    $distribution = static function (array $values, array $patterns): array {
         $result = array_fill(0, count($patterns), 0);
         foreach ($values as $label => $quota) {
             $matched = false;
@@ -213,31 +224,37 @@ try {
                 $result[0] += $quota;
             }
         }
-        return array_map(static fn(int $v): float => $total > 0 ? round($v / $total * 100, 1) : 0, $result);
+        return $result;
     };
 
-    $GEN = $DIS = [];
+    $GENQ = $DISQ = [];
     foreach (['g', 'p'] as $cat) {
-        $GEN[$cat] = $distribution(
+        $GENQ[$cat] = $distribution(
             $gender[$cat],
-            ['/(semua|bebas|laki.*perempuan|pria.*wanita)/u', '/(laki|pria|male)/u', '/(perempuan|wanita|female)/u'],
-            $metrics[$cat]['kuota']
+            ['/(semua|bebas|laki.*perempuan|pria.*wanita)/u', '/(laki|pria|male)/u', '/(perempuan|wanita|female)/u']
         );
-        $DIS[$cat] = $distribution(
+        $DISQ[$cat] = $distribution(
             $physical[$cat],
-            ['/(non.?disabil|normal|sehat)/u', '/(semua|bebas|disabil.*non)/u', '/(disabil|difabel)/u'],
-            $metrics[$cat]['kuota']
+            ['/^(non.?disabil|normal|sehat)$/u', '/(semua|bebas|disabil.*non|non.*disabil.*disabil)/u', '/(disabil|difabel)/u']
         );
     }
-    $combinedPercent = static function (array $a, int $ta, array $b, int $tb): array {
-        $total = $ta + $tb;
+    $combineDistribution = static function (array $a, array $b): array {
+        return array_map(static fn(int $i): int => $a[$i] + $b[$i], array_keys($a));
+    };
+    $GENQ['c'] = $combineDistribution($GENQ['g'], $GENQ['p']);
+    $DISQ['c'] = $combineDistribution($DISQ['g'], $DISQ['p']);
+    $percentDistribution = static function (array $values): array {
+        $total = array_sum($values);
         return array_map(
-            static fn(int $i): float => $total > 0 ? round(($a[$i] * $ta + $b[$i] * $tb) / $total, 1) : 0,
-            array_keys($a)
+            static fn(int $value): float => $total > 0 ? round($value / $total * 100, 1) : 0,
+            $values
         );
     };
-    $GEN['c'] = $combinedPercent($GEN['g'], $metrics['g']['kuota'], $GEN['p'], $metrics['p']['kuota']);
-    $DIS['c'] = $combinedPercent($DIS['g'], $metrics['g']['kuota'], $DIS['p'], $metrics['p']['kuota']);
+    $GEN = $DIS = [];
+    foreach (['g', 'p', 'c'] as $cat) {
+        $GEN[$cat] = $percentDistribution($GENQ[$cat]);
+        $DIS[$cat] = $percentDistribution($DISQ[$cat]);
+    }
 
     $PJ = [];
     foreach (['g', 'p'] as $cat) {
@@ -290,6 +307,8 @@ try {
         'sk' => ['g' => top($skillCounts['g'], 7), 'p' => top($skillCounts['p'], 7), 'c' => top($skillCounts['c'], 7)],
         'GEN' => $GEN,
         'DIS' => $DIS,
+        'GENQ' => $GENQ,
+        'DISQ' => $DISQ,
         'PJ' => $PJ,
         'SK' => $SK,
         'HM' => $HM,

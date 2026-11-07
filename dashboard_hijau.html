@@ -73,7 +73,7 @@ section{display:none;padding-top:20px}section.on{display:block}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
 .scw{overflow-x:auto}.sc{width:100%;height:auto;min-width:540px;display:block}.sc .ax{font-size:11px;fill:var(--mute)}.sc .at{font-size:12px;fill:var(--mute)}.sc .dl2{stroke:var(--mute);stroke-dasharray:4 4;opacity:.6}.sc .pl{font-size:12px;fill:var(--ink)}.pt{cursor:pointer;transition:opacity .2s}.scw.has-sel .pt:not(.sel){opacity:.3}.pt.sel circle{stroke:var(--ink);stroke-width:2.5}
 .mapw{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px}@media (max-width:720px){.mapw{grid-template-columns:1fr}}
-.mp svg{width:100%;height:auto;display:block}.mp path{stroke:var(--card);stroke-width:.8}.mp path.o{fill:var(--track)}.mp path:not(.o){cursor:pointer}.mp path.sel{stroke:var(--ink);stroke-width:2}
+.mp svg{width:100%;height:auto;display:block}.mp path{stroke:var(--card);stroke-width:.8}.mp path.o{fill:var(--track)}.mp path:not(.o),.mp circle{cursor:pointer}.mp path.sel,.mp circle.sel{stroke:var(--ink);stroke-width:2}
 .mp .lg{align-items:center;margin-top:8px}.mp .lg i{display:inline-block}.side h3{font:700 16px Georgia,serif;margin:0 0 4px}.cap{font-size:13px;color:var(--mute);margin:0 0 10px}.sc .qt{font-size:12px;font-weight:700;fill:var(--mute)}
 footer{margin-top:24px;font-size:13px;color:var(--mute)}
 </style>
@@ -90,9 +90,9 @@ footer{margin-top:24px;font-size:13px;color:var(--mute)}
 
 <section id="s0" class="on">
 <div class="grid g3" style="margin-bottom:14px">
-<div class="card stat" style="margin:0"><div class="l">Total postingan</div><b id="totalPos">4.531</b></div>
-<div class="card stat" style="margin:0"><div class="l">Total kuota</div><b id="totalKuota">88.532</b></div>
-<div class="card stat" style="margin:0"><div class="l">Total lamaran</div><b id="totalLam">3.524.647</b></div>
+<div class="card stat" style="margin:0"><div class="l">Total postingan</div><b id="totalPos">0</b></div>
+<div class="card stat" style="margin:0"><div class="l">Total kuota</div><b id="totalKuota">0</b></div>
+<div class="card stat" style="margin:0"><div class="l">Total lamaran</div><b id="totalLam">0</b></div>
 </div>
 <div class="card">
 <div class="ch"><div><h2>Kategori lowongan</h2></div></div>
@@ -156,7 +156,7 @@ footer{margin-top:24px;font-size:13px;color:var(--mute)}
 <script src="dashboard-data.php"></script>
 <script>
 const nf=n=>n.toLocaleString('id-ID'),$=id=>document.getElementById(id);
-const pct=(a,b)=>(a/b*100).toFixed(1).replace('.',',')+'%',pc=v=>v.toFixed(1).replace('.',',')+'%',dc=v=>v.toFixed(1).replace('.',',');
+const pct=(a,b)=>(b?a/b*100:0).toFixed(1).replace('.',',')+'%',pc=v=>(Number.isFinite(v)?v:0).toFixed(1).replace('.',',')+'%',dc=v=>(Number.isFinite(v)?v:0).toFixed(1).replace('.',',');
 const tabs=['Ringkasan','Wilayah','Kebutuhan skill','Peluang'],tb=$('tabs');
 tabs.forEach((t,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('role','tab');b.setAttribute('aria-selected',i==0);
 b.onclick=()=>{[...tb.children].forEach((x,j)=>x.setAttribute('aria-selected',j==i));document.querySelectorAll('section').forEach((s,j)=>s.classList.toggle('on',j==i));scrollTo({top:0})};tb.appendChild(b)});
@@ -164,7 +164,8 @@ const go=i=>tb.children[i].click();
 function seg(el,opts,def,cb){const e=$(el);const draw=k=>{e.innerHTML='';opts.forEach(([key,l])=>{const b=document.createElement('button');b.type='button';b.textContent=l;b.className=key==k?'on':'';b.onclick=()=>{draw(key);cb(key)};e.appendChild(b)})};draw(def);cb(def)}
 const DEF='Klik salah satu kategori untuk membaca penjelasannya.';
 function pick(box,r,noteEl,html){r.onclick=()=>{const was=r.classList.contains('sel');box.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));box.classList.toggle('has-sel',!was);r.classList.toggle('sel',!was);$(noteEl).innerHTML=was?DEF:html};r.onkeydown=ev=>{if(ev.key=='Enter'||ev.key==' '){ev.preventDefault();r.onclick()}}}
-function bars(el,items,col,noteEl,o){o=o||{};const fmt=o.fmt||nf,e=$(el),max=Math.max(...items.map(i=>i[1]));e.innerHTML='';e.classList.remove('has-sel');$(noteEl).innerHTML=DEF;
+function bars(el,items,col,noteEl,o){o=o||{};const fmt=o.fmt||nf,e=$(el);e.innerHTML='';e.classList.remove('has-sel');$(noteEl).innerHTML=DEF;
+if(!items.length){e.innerHTML='<p class="cap">Data belum tersedia.</p>';return}const max=Math.max(1,...items.map(i=>i[1]));
 items.forEach(it=>{const r=document.createElement('div');r.className='bar focus';r.tabIndex=0;
 r.innerHTML=`<span>${it[0]}</span><div class="t"><div class="f" style="width:0;background:${col}"></div></div><span class="v">${fmt(it[1])}</span>`;
 pick(e,r,noteEl,it[2]);e.appendChild(r);requestAnimationFrame(()=>r.querySelector('.f').style.width=(it[1]/max*100)+'%')})}
@@ -173,6 +174,7 @@ items.forEach(it=>{const r=document.createElement('div');r.className='bar focus'
 r.innerHTML=`<span>${it[0]}</span><div>${[1,2].map(j=>`<div class="t" style="height:10px;margin:3px 0"><div class="f" style="width:${it[j]/55*100}%;background:var(${j==1?'--g':'--p'})"></div></div>`).join('')}</div><span class="v" style="font-size:13px">${pc(it[1])}<br>${pc(it[2])}</span>`;
 pick(e,r,noteEl,it[3]);e.appendChild(r)})}
 function donut(el,items,noteEl,title){const e=$(el),C=2*Math.PI*44,tot=items.reduce((a,i)=>a+i[1],0);let sel=-1;
+if(!tot){e.innerHTML='<p class="cap">Data belum tersedia.</p>';$(noteEl).innerHTML=DEF;return}
 const draw=()=>{let st=0;const cs=items.map((it,i)=>{const L=it[1]/tot*C,op=sel<0||sel==i?1:.25,a=(st+L/2)/C*2*Math.PI-Math.PI/2;
 const c=`<circle data-i="${i}" cx="60" cy="60" r="44" fill="none" stroke="var(--d${i+1})" stroke-width="18" stroke-dasharray="${L} ${C-L}" stroke-dashoffset="${-st}" transform="rotate(-90 60 60)" style="cursor:pointer;opacity:${op}"><title>${it[0]}: ${pc(it[1])}</title></circle>`;
 st+=L;return c}).join('');
@@ -181,6 +183,7 @@ e.innerHTML=`<svg viewBox="0 0 120 120" class="dn" role="img" aria-label="${titl
 $(noteEl).innerHTML=sel<0?DEF:items[sel][2]};
 e.onclick=ev=>{const t=ev.target.closest('[data-i]');if(!t)return;const i=+t.dataset.i;sel=sel==i?-1:i;draw()};draw()}
 function tmap(el,items,noteEl,col){const e=$(el),W=2.6,out=[],S=a=>a.reduce((s,i)=>s+i[1],0),tot=S(items);e.innerHTML='';e.classList.remove('has-sel');$(noteEl).innerHTML=DEF;
+if(!items.length||!tot){e.innerHTML='<p class="cap">Data belum tersedia.</p>';return}
 (function sp(a,x,y,w,h){if(a.length==1){out.push([a[0],x,y,w,h]);return}let acc=0,k=0;const t=S(a);for(;k<a.length-2;k++){acc+=a[k][1];if(acc>=t/2)break}const A=a.slice(0,k+1),B=a.slice(k+1),f=S(A)/t;
 if(w>=h){sp(A,x,y,w*f,h);sp(B,x+w*f,y,w*(1-f),h)}else{sp(A,x,y,w,h*f);sp(B,x,y+h*f,w,h*(1-f))}})(items,0,0,W,1);
 out.forEach(([it,x,y,w,h])=>{const d=document.createElement('div'),s=it[1]/tot*100;d.className='tl focus'+(it[3]?' o':'');d.tabIndex=0;d.title=it[0]+': '+pc(s);
@@ -188,11 +191,11 @@ d.style.cssText=`left:${x/W*100}%;top:${y*100}%;width:${w/W*100}%;height:${h*100
 pick(e,d,noteEl,it[2]);e.appendChild(d)})}
 const sent=(noun,n,v,tot,lb,i,x)=>(i?`<b>${n}</b> memiliki kuota <b>${nf(v)}</b>`:`${noun} dengan kuota terbesar adalah <b>${n}</b>, yaitu <b>${nf(v)}</b> kuota`)+`, sekitar <b>${pct(v,tot)}</b> dari ${lb}.${x||''}`;
 
-const T=window.DB_DATA?.T||{pos:4531,kuota:88532,lam:3524647};
-const D={g:{n:'Green murni',c:'var(--g)',pos:294,kuota:2970,lam:240819,lb:'kuota green murni',pl:'green murni',def:'Lowongan yang langsung digolongkan sebagai pekerjaan hijau, misalnya teknisi bangunan dan ahli teknik sipil.'},
-p:{n:'Green potensial',c:'var(--p)',pos:421,kuota:10575,lam:327360,lb:'kuota green potensial',pl:'green potensial',def:'Lowongan yang berpotensi terkait transisi hijau lewat sektor, fungsi, atau keterampilan, misalnya pembuat sepatu dan operator mesin.'},
-n:{n:'Non-green',c:'var(--n)',pos:3816,kuota:74987,lam:2956468,def:'Seluruh lowongan di luar dua kategori hijau. Dipakai sebagai pembanding.'},
-c:{n:'Murni + potensial',c:'var(--g)',pos:715,kuota:13545,lb:'seluruh kuota hijau',pl:'hijau (murni + potensial)'}};
+const T=window.DB_DATA?.T||{pos:0,kuota:0,lam:0};
+const D={g:{n:'Green murni',c:'var(--g)',pos:0,kuota:0,lam:0,lb:'kuota green murni',pl:'green murni',def:'Lowongan yang langsung digolongkan sebagai pekerjaan hijau, misalnya teknisi bangunan dan ahli teknik sipil.'},
+p:{n:'Green potensial',c:'var(--p)',pos:0,kuota:0,lam:0,lb:'kuota green potensial',pl:'green potensial',def:'Lowongan yang berpotensi terkait transisi hijau lewat sektor, fungsi, atau keterampilan, misalnya pembuat sepatu dan operator mesin.'},
+n:{n:'Non-green',c:'var(--n)',pos:0,kuota:0,lam:0,def:'Seluruh lowongan di luar dua kategori hijau. Dipakai sebagai pembanding.'},
+c:{n:'Murni + potensial',c:'var(--g)',pos:0,kuota:0,lam:0,lb:'seluruh kuota hijau',pl:'hijau (murni + potensial)'}};
 if(window.DB_DATA){
 ['g','p','n'].forEach(k=>Object.assign(D[k],window.DB_DATA.metrics[k]));
 Object.assign(D.c,{pos:D.g.pos+D.p.pos,kuota:D.g.kuota+D.p.kuota,lam:D.g.lam+D.p.lam});
@@ -200,7 +203,7 @@ $('totalPos').textContent=nf(T.pos);$('totalKuota').textContent=nf(T.kuota);$('t
 }else if(window.DB_ERROR){$('dbError').hidden=false;$('dbError').textContent=window.DB_ERROR}
 let met='kuota',sel=null;
 function drawCat(){const st=$('stack'),cs=$('cats');st.innerHTML='';cs.innerHTML='';
-['g','p','n'].forEach(k=>{const d=D[k],w=d[met]/T[met]*100,dim=sel&&sel!=k;
+['g','p','n'].forEach(k=>{const d=D[k],w=T[met]?d[met]/T[met]*100:0,dim=sel&&sel!=k;
 const x=document.createElement('div');x.style.width=w+'%';x.style.background=d.c;x.className=dim?'dim':'';x.textContent=w>9?pct(d[met],T[met]):'';x.title=d.n+': '+pct(d[met],T[met]);x.onclick=()=>pickCat(k);st.appendChild(x);
 const c=document.createElement('button');c.type='button';c.className='cat'+(sel==k?' on':'')+(dim?' dim':'');c.style.setProperty('--c',d.c);
 c.innerHTML=`<h3><i></i>${d.n}</h3><p>${d.def}</p>`;c.onclick=()=>pickCat(k);cs.appendChild(c)});
@@ -210,30 +213,24 @@ function pickCat(k){sel=sel==k?null:k;drawCat()}
 seg('metSeg',[['kuota','Kuota'],['pos','Postingan'],['lam','Lamaran']],'kuota',k=>{met=k;drawCat()});
 const SEG3=[['g','Green murni'],['p','Green potensial'],['c','Murni + potensial']];
 
-const jobs=window.DB_DATA?.jobs||{g:[['Teknisi Teknik Bangunan',786],['Teknisi Ilmu Fisika dan Teknik YTDL',664],['Ahli Teknik Sipil',530],['Ahli Teknik Industri dan Produksi',162],['Teknisi Ilmu Kimia dan Fisika',149],['Asisten dan Pengawas Kesehatan Lingkungan',111],['Operator Mesin Produksi Tenaga Listrik',109]],
-p:[['Pembuat Sepatu dan YBDI',3600],['Ahli Teknik Mekanika',1396],['Pekerja Instalasi dan Servis Peralatan TIK',943],['Operator Mesin Pengolahan Bijih Mineral',868],['Pengemudi Truk Berat dan Truk Kontainer',471],['Mekanik Mesin Pertanian dan Industri',434],['Tukang Jahit, Penyulam dan YBDI',371]]};
-jobs.c=[...jobs.g,...jobs.p].sort((a,b)=>b[1]-a[1]).slice(0,7);
+const jobs=window.DB_DATA?.jobs||{g:[],p:[],c:[]};
 seg('jobSeg',SEG3,'g',k=>{const d=D[k];bars('jobBars',jobs[k].map((j,i)=>[j[0],j[1],sent('Jabatan',j[0],j[1],d.kuota,d.lb,i)]),d.c,'jobNote')});
-const sec=window.DB_DATA?.sec||{g:[['Konstruksi',1270],['Pengangkutan dan Pergudangan',652],['Industri Pengolahan',353],['Real Estat',215],['Aktivitas Profesional, Ilmiah dan Teknis',131]],
-p:[['Industri Pengolahan',6552],['Perdagangan Besar dan Eceran',1002],['Aktivitas Profesional, Ilmiah dan Teknis',988],['Penyewaan dan Penunjang Usaha',789],['Real Estat',445]],
-c:[['Industri Pengolahan',6905],['Konstruksi',1494],['Aktivitas Profesional, Ilmiah dan Teknis',1119],['Perdagangan Besar dan Eceran',1095],['Pengangkutan dan Pergudangan',950],['Penyewaan dan Penunjang Usaha',852],['Real Estat',660],['Pengadaan Listrik, Gas dan Uap',174],['Pertanian, Kehutanan dan Perikanan',100],['Pertambangan dan Penggalian',82]]};
+const sec=window.DB_DATA?.sec||{g:[],p:[],c:[]};
 seg('secSeg',SEG3,'g',k=>{const d=D[k];bars('secBars',sec[k].map((x,i)=>[x[0],x[1],sent('Sektor',x[0],x[1],d.kuota,d.lb,i)]),d.c,'secNote')});
-// Fallback statis digunakan hanya ketika endpoint database tidak tersedia.
-const PV=window.DB_DATA?.PV||[['Jawa Barat','Jawa',6962,700],['DKI Jakarta','Jawa',2250,750],['Sulawesi Tengah','Sulawesi',1008,150],['Kalimantan Utara','Kalimantan',980,350],['Jawa Tengah','Jawa',568,200],['Jawa Timur','Jawa',453,150],['Sumatera Barat','Sumatera',317,100],['Banten','Jawa',315,150],['Kalimantan Barat','Kalimantan',134,80],['Nusa Tenggara Barat','Nusa Tenggara',122,70]];
+const PV=window.DB_DATA?.PV||[];
 const val=(r,k)=>k=='g'?r[3]:k=='p'?r[2]-r[3]:r[2];
 seg('tmSeg',SEG3,'g',k=>{const d=D[k],it=PV.map(r=>[r[0],val(r,k)]).sort((a,b)=>b[1]-a[1]).slice(0,10).map(x=>[x[0],x[1],`<b>${x[0]}</b> memiliki kuota <b>${nf(x[1])}</b>, sekitar <b>${pct(x[1],d.kuota)}</b> dari ${d.lb}.`]);
-const o=d.kuota-it.reduce((a,x)=>a+x[1],0);it.push(['Provinsi lain',o,`<b>Provinsi lain</b> mencakup 19 provinsi di luar sepuluh provinsi teratas, dengan kuota <b>${nf(o)}</b>, sekitar <b>${pct(o,d.kuota)}</b> dari ${d.lb}.`,1]);tmap('tm',it,'tmNote',d.c)});
-// Data live berasal dari kolom keahlian; nilai berikut adalah fallback.
-const sk=window.DB_DATA?.sk||{g:[['Membaca gambar teknik',168],['Keselamatan dan kesehatan kerja (K3)',151],['Pengelolaan proyek',120],['Pengoperasian alat ukur dan survei',96],['Komunikasi dan kerja tim',90],['Microsoft Office',74],['Bahasa Inggris',52]],
-p:[['Pengoperasian mesin produksi',240],['Keselamatan dan kesehatan kerja (K3)',205],['Disiplin dan kerja tim',190],['Perawatan mesin',130],['Pengendalian mutu',98],['Microsoft Office',70],['Bahasa Inggris',45]]};
-const m={};[...sk.g,...sk.p].forEach(x=>{m[x[0]]=m[x[0]]?[x[0],m[x[0]][1]+x[1]]:[...x]});sk.c=Object.values(m).sort((a,b)=>b[1]-a[1]).slice(0,7);
+const o=d.kuota-it.reduce((a,x)=>a+x[1],0),otherCount=Math.max(0,PV.length-10);
+if(otherCount&&o>0)it.push(['Provinsi lain',o,`<b>Provinsi lain</b> mencakup ${nf(otherCount)} provinsi di luar sepuluh provinsi teratas, dengan kuota <b>${nf(o)}</b>, sekitar <b>${pct(o,d.kuota)}</b> dari ${d.lb}.`,1]);tmap('tm',it,'tmNote',d.c)});
+const sk=window.DB_DATA?.sk||{g:[],p:[],c:[]};
 seg('skSeg',SEG3,'g',k=>{const d=D[k];bars('skBars',sk[k].map(x=>[x[0],x[1],`Pada <b>${nf(d.pos)} postingan</b> ${d.pl} (${nf(d.kuota)} kuota), <b>${x[0]}</b> muncul di <b>${nf(x[1])}</b> postingan (${pct(x[1],d.pos)}).`]),d.c,'skNote')});
-// Data live berasal dari jenis_kelamin dan kondisi_fisik; nilai berikut adalah fallback.
-const GEN=window.DB_DATA?.GEN||{g:[55.0,44.9,0.1],p:[71.6,20.1,8.3],c:[68.0,25.5,6.5]},DIS=window.DB_DATA?.DIS||{g:[93.8,6.0,0.2],p:[55.4,44.3,0.3],c:[63.8,35.9,0.3]};
+const EMPTY_DIST={g:[0,0,0],p:[0,0,0],c:[0,0,0]};
+const GEN=window.DB_DATA?.GEN||EMPTY_DIST,DIS=window.DB_DATA?.DIS||EMPTY_DIST;
+const GENQ=window.DB_DATA?.GENQ||EMPTY_DIST,DISQ=window.DB_DATA?.DISQ||EMPTY_DIST;
 const gl=['Terbuka untuk semua','Laki-laki','Perempuan'],dl=['Non-disabilitas','Terbuka untuk semua','Disabilitas'];
 const gt=['Tidak membatasi gender pelamar.','Meminta pelamar laki-laki.','Meminta pelamar perempuan.'],dt=['Ditujukan bagi pelamar non-disabilitas.','Terbuka bagi penyandang disabilitas maupun non-disabilitas.','Khusus untuk penyandang disabilitas.'];
-const dd=(L,V,t,lb,tot,ex)=>L.map((l,i)=>{const q=ex&&ex[i]!=null?ex[i]:Math.round(V[i]/100*tot);return [l,V[i],`<b>${l}</b> memiliki kuota <b>${nf(q)}</b>, sekitar <b>${pc(V[i])}</b> dari ${lb}. ${t[i]}`]});
-seg('dnSeg',SEG3,'g',k=>{const d=D[k];donut('dnG',dd(gl,GEN[k],gt,d.lb,d.kuota),'dnGn','Jenis kelamin');donut('dnD',dd(dl,DIS[k],dt,d.lb,d.kuota,k=='c'?[null,4862,35]:null),'dnDn','Kondisi fisik')});
+const dd=(L,V,Q,t,lb)=>L.map((l,i)=>[l,V[i],`<b>${l}</b> memiliki kuota <b>${nf(Q[i])}</b>, sekitar <b>${pc(V[i])}</b> dari ${lb}. ${t[i]}`]);
+seg('dnSeg',SEG3,'g',k=>{const d=D[k];donut('dnG',dd(gl,GEN[k],GENQ[k],gt,d.lb),'dnGn','Jenis kelamin');donut('dnD',dd(dl,DIS[k],DISQ[k],dt,d.lb),'dnDn','Kondisi fisik')});
 
 const BG=[[[95.2,5.5],[97.6,5.2],[100.3,2.5],[103.8,0.5],[104.6,-1.5],[106,-3.2],[105.8,-5.8],[104.5,-5.5],[102.2,-4],[100.3,-1.8],[98.7,0.5],[97,2.5],[95.5,4]],
 [[108.9,1.6],[110,2],[112,2],[115.5,4.2],[117.5,4.3],[118.1,2.8],[119,0],[117.5,-1],[116.5,-3.5],[116,-4],[114,-3.5],[111.5,-3.2],[110,-2.8],[109,-1],[108.9,0]],
@@ -247,25 +244,38 @@ const MP={'Sumatera Barat':[[98.7,0.6],[100.4,0.9],[101.5,-0.5],[101,-1.9],[100.
 'Kalimantan Barat':[[108.9,1.6],[110,2],[112,1.5],[114.2,0.6],[114.2,-1.5],[111.8,-3.1],[110,-2.9],[109,-1],[108.9,0]],'Kalimantan Utara':[[115.5,4.2],[117.5,4.3],[118.1,2.8],[117.6,1.2],[116.2,1.6],[115.6,3]],
 'Sulawesi Tengah':[[119.8,0.8],[121.8,1.1],[123.3,0.8],[123.9,-0.9],[122.8,-1.3],[122.2,-2.5],[121.2,-2.8],[120,-1.8],[119.4,-0.2]],
 'Nusa Tenggara Barat':[[115.8,-8.4],[116.7,-8.2],[117.4,-8.3],[119,-8.3],[119.1,-8.9],[117.3,-9],[116,-8.9]]};
-const GEO=pts=>'M'+pts.map(([lo,la])=>((lo-95)*16+10).toFixed(0)+' '+((6-la)*16+10).toFixed(0)).join('L')+'Z';
-// Kabupaten/kota: hanya 6 yang ada di data (kuota hijau murni + potensial)
-const KB=window.DB_DATA?.KB||{'Jawa Barat':[['Kab. Garut',3601,'2,0'],['Kab. Subang',2742,'4,7']],'Sulawesi Tengah':[['Kab. Morowali',1002,'19,1']],'DKI Jakarta':[['Kota Adm. Jakarta Selatan',989,'18,5'],['Kota Adm. Jakarta Utara',672,'19,6']],'Kalimantan Utara':[['Kab. Bulungan',980,'4,2']]};
+const PC={'Aceh':[96.8,4.3],'Sumatera Utara':[99.2,2.2],'Sumatera Barat':[100.4,-0.8],'Riau':[101.7,0.5],'Kepulauan Riau':[104.5,1],
+'Jambi':[102.6,-1.6],'Sumatera Selatan':[104,-3],'Kepulauan Bangka Belitung':[106,-2.2],'Bengkulu':[102.3,-3.8],'Lampung':[105,-5],
+'DKI Jakarta':[106.85,-6.2],'Banten':[106.1,-6.5],'Jawa Barat':[107.6,-6.9],'Jawa Tengah':[110,-7.1],'DI Yogyakarta':[110.4,-7.8],'Jawa Timur':[112.7,-7.5],
+'Bali':[115.2,-8.4],'Nusa Tenggara Barat':[117.3,-8.6],'Nusa Tenggara Timur':[122.2,-8.7],
+'Kalimantan Barat':[111,-0.2],'Kalimantan Tengah':[113.5,-1.7],'Kalimantan Selatan':[115.3,-3.2],'Kalimantan Timur':[117,0.4],'Kalimantan Utara':[116.7,3],
+'Sulawesi Utara':[124.5,1.3],'Gorontalo':[122.4,0.7],'Sulawesi Tengah':[121,-1],'Sulawesi Barat':[119.3,-2.5],'Sulawesi Selatan':[120,-4],'Sulawesi Tenggara':[122,-4],
+'Maluku':[128,-3.2],'Maluku Utara':[127.8,0.5],'Papua Barat':[133,-1.5],'Papua Barat Daya':[131.5,-1],'Papua':[138,-3],
+'Papua Tengah':[136,-3.5],'Papua Pegunungan':[139,-4.2],'Papua Selatan':[139,-7]};
+const PN=s=>s.toLowerCase().replace(/^provinsi\s+/,'').replace(/\b(kep|kep\.)\s+/,'kepulauan ').replace(/[.\s]+/g,' ').trim()
+.replace('daerah istimewa yogyakarta','di yogyakarta').replace('daerah khusus ibukota jakarta','dki jakarta');
+const PCN=Object.fromEntries(Object.entries(PC).map(([n,p])=>[PN(n),p]));
+const XY=([lo,la])=>[((lo-95)*16+10).toFixed(0),((6-la)*16+10).toFixed(0)];
+const GEO=pts=>'M'+pts.map(p=>XY(p).join(' ')).join('L')+'Z';
+const KB=window.DB_DATA?.KB||{g:{},p:{},c:{}};
 let pvK='c',pvS=null;
 function drawPV(){const d=D[pvK],rows=PV.map(r=>[r[0],val(r,pvK)]),mx=Math.max(1,...rows.map(r=>r[1])),c=d.c;
-$('mapSvg').innerHTML=BG.map(q=>`<path class="o" d="${GEO(q)}"/>`).join('')+Object.keys(MP).map(n=>{const found=rows.find(r=>r[0]==n),v=found?found[1]:0;return `<path class="focus${n==pvS?' sel':''}" tabindex="0" data-n="${n}" d="${GEO(MP[n])}" style="fill:${c};fill-opacity:${(.2+.8*v/mx).toFixed(2)}"><title>${n}: ${nf(v)} kuota</title></path>`}).join('');
+$('mapSvg').innerHTML=BG.map(q=>`<path class="o" d="${GEO(q)}"/>`).join('')+
+Object.keys(MP).map(shapeName=>{const found=rows.find(r=>PN(r[0])==PN(shapeName)),n=found?found[0]:shapeName,v=found?found[1]:0;return `<path class="focus${n==pvS?' sel':''}" tabindex="0" data-n="${n}" d="${GEO(MP[shapeName])}" style="fill:${c};fill-opacity:${(.2+.8*v/mx).toFixed(2)}"><title>${n}: ${nf(v)} kuota</title></path>`}).join('')+
+rows.filter(r=>!Object.keys(MP).some(n=>PN(n)==PN(r[0]))&&PCN[PN(r[0])]).map(r=>{const [x,y]=XY(PCN[PN(r[0])]),radius=(4+6*Math.sqrt(r[1]/mx)).toFixed(1);return `<circle class="focus${r[0]==pvS?' sel':''}" tabindex="0" data-n="${r[0]}" cx="${x}" cy="${y}" r="${radius}" fill="${c}" fill-opacity="${(.35+.65*r[1]/mx).toFixed(2)}"><title>${r[0]}: ${nf(r[1])} kuota</title></circle>`}).join('');
 $('mapLg').innerHTML=`<span>Rendah</span><i style="width:120px;height:10px;margin:0 6px;border-radius:3px;background:linear-gradient(90deg,color-mix(in srgb,${c} 20%,transparent),${c})"></i><span>Tinggi (${nf(mx)} kuota)</span><span style="margin-left:12px"><i style="background:var(--track)"></i>Provinsi lain</span>`;
-const items=(pvS?(KB[pvS]||[]).map(x=>[x[0],x[1],x[2],x[0]]):Object.entries(KB).flatMap(([p,a])=>a.map(x=>[x[0]+' ('+p+')',x[1],x[2],x[0]]))).sort((a,b)=>b[1]-a[1]).slice(0,5);
+const cityData=KB[pvK]||{};
+const items=(pvS?(cityData[pvS]||[]).map(x=>[x[0],x[1],x[2],x[0]]):Object.entries(cityData).flatMap(([p,a])=>a.map(x=>[x[0]+' ('+p+')',x[1],x[2],x[0]]))).sort((a,b)=>b[1]-a[1]).slice(0,5);
 const pr=pvS&&(PV.find(r=>r[0]==pvS)||[pvS,'',0,0]);
 $('sdT').textContent=pvS||'Lima kabupaten/kota teratas';
-$('sdS').innerHTML=(pvS?`Kuota ${d.pl} di ${pvS}: <b>${nf(val(pr,pvK))}</b>, sekitar <b>${pct(val(pr,pvK),d.kuota)}</b> dari ${d.lb}. `:'Klik provinsi di peta untuk melihat kabupaten/kota di dalamnya. ')+'Kuota kabupaten/kota mencakup murni + potensial.';
+$('sdS').innerHTML=pvS?`Kuota ${d.pl} di ${pvS}: <b>${nf(val(pr,pvK))}</b>, sekitar <b>${pct(val(pr,pvK),d.kuota)}</b> dari ${d.lb}.`:'Klik provinsi di peta untuk melihat kabupaten/kota di dalamnya.';
 if(items.length)bars('kbBars',items.map(x=>[x[0],x[1],`<b>${x[3]}</b> memiliki kuota hijau <b>${nf(x[1])}</b>, dengan sekitar <b>${x[2]}</b> pelamar untuk setiap kuota.`]),D.c.c,'pvNote');
 else{$('kbBars').innerHTML='<p class="cap">Data kabupaten/kota untuk provinsi ini belum tersedia.</p>';$('pvNote').innerHTML=DEF}}
 $('mapSvg').onclick=ev=>{const t=ev.target.closest('[data-n]');if(!t)return;pvS=pvS==t.dataset.n?null:t.dataset.n;drawPV()};
 $('mapSvg').onkeydown=ev=>{if(ev.key=='Enter'||ev.key==' '){const t=ev.target.closest('[data-n]');if(t){ev.preventDefault();t.dispatchEvent(new MouseEvent('click',{bubbles:true}))}}};
 seg('pvSeg',SEG3,'c',k=>{pvK=k;drawPV()});
 
-// Peluang: kuota dan rasio dari booklet (jabatan hijau berkuota minimal 100 yang datanya tersedia)
-const PJ=window.DB_DATA?.PJ||[['Pembuat Sepatu dan YBDI','Pembuat Sepatu','p',3600,4833/3600],['Operator Mesin Pengolahan Bijih Mineral','Operator Mesin Bijih','p',868,5.0],['Teknisi Teknik Bangunan','Teknisi Bangunan','g',786,7.0],['Pekerja Instalasi dan Servis Peralatan TIK','Instalasi & Servis TIK','p',943,11.8],['Tukang Jahit, Penyulam dan YBDI','Tukang Jahit','p',371,12.6],['Teknisi Ilmu Kimia dan Fisika','Teknisi Kimia & Fisika','g',149,137.3],['Asisten dan Pengawas Kesehatan Lingkungan','Asisten Kes. Lingkungan','g',111,239.7],['Ahli Teknik Industri dan Produksi','Ahli Teknik Industri','g',162,430.2]];
+const PJ=window.DB_DATA?.PJ||[];
 const pf=v=>v>=10?String(Math.round(v)):v.toFixed(1).replace('.',',');
 function drawOp(k){const W=640,H=380,L=60,R=16,Tp=16,B=50,lx=Math.log10,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const pts=PJ.filter(p=>k=='c'||p[2]==k),maxQ=Math.max(5000,...pts.map(p=>p[3])),maxR=Math.max(1000,...pts.map(p=>p[4]));
@@ -279,9 +289,8 @@ box.className='scw';box.innerHTML=s+'</svg>';$('opNote').innerHTML=DEF;
 box.querySelectorAll('.pt').forEach(g=>{const p=pts[+g.dataset.i];pick(box,g,'opNote',`<b>${p[0]}</b> (${p[2]=='g'?'green murni':'green potensial'}): kuota <b>${nf(p[3])}</b> dengan sekitar <b>${nf(Math.round(p[3]*p[4]))}</b> lamaran, atau sekitar <b>${pf(p[4])}</b> pelamar untuk setiap kuota.`)})}
 seg('opSeg',SEG3,'c',drawOp);
 
-// Matriks jabatan x skill (kuota)
-const SK=window.DB_DATA?.SK||['K3 / HSE','AutoCAD','Gambar Teknik','Instalasi Listrik','Mesin Jahit','Pengelasan','Quality Control','Pemeliharaan Mesin'];
-const HM=window.DB_DATA?.HM||[['Pembuat Sepatu dan YBDI','p',3600,[648,0,72,0,2592,0,1260,288]],['Ahli Teknik Mekanika','p',1396,[586,419,670,209,0,349,279,530]],['Pekerja Instalasi dan Servis TIK','p',943,[189,19,75,547,0,0,57,283]],['Operator Mesin Pengolahan Bijih Mineral','p',868,[556,0,43,52,0,87,156,304]],['Teknisi Teknik Bangunan','g',786,[314,377,432,94,0,39,79,31]],['Teknisi Ilmu Fisika dan Teknik YTDL','g',664,[299,66,146,252,0,40,80,133]],['Ahli Teknik Sipil','g',530,[186,329,307,16,0,0,42,0]],['Pengemudi Truk Berat dan Kontainer','p',471,[141,0,0,0,0,0,0,57]],['Mekanik Mesin Pertanian dan Industri','p',434,[122,17,65,78,0,95,43,304]],['Tukang Jahit, Penyulam dan YBDI','p',371,[37,0,0,0,315,0,111,0]]];
+const SK=window.DB_DATA?.SK||[];
+const HM=window.DB_DATA?.HM||[];
 const bin=v=>v<=0?0:v<50?1:v<300?2:v<1000?3:v<5000?4:5;
 function hmPick(box,els,key,html){const same=box.dataset.k==key;box.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));box.classList.toggle('has-sel',!same);box.dataset.k=same?'':key;if(!same)els.forEach(x=>x.classList.add('sel'));$('hmNote').innerHTML=same?DEF:html}
 function drawHM(k){const rows=HM.filter(r=>k=='c'||r[1]==k),box=$('hm');box.className='hm';box.dataset.k='';$('hmNote').innerHTML=DEF;
