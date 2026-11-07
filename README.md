@@ -2,7 +2,7 @@
 
 ## Menjalankan dashboard
 
-1. Pastikan MySQL aktif dan database `green_job` berisi tabel `green_job`.
+1. Pastikan MySQL aktif dan database `job_admin_prod` berisi tabel `green_job`.
 2. Jika kredensial berubah, perbarui `config.php`.
 3. Jalankan web server dari folder proyek:
 

@@ -5,6 +5,6 @@ return [
     'host' => 'localhost',
     'user' => 'root',
     'pass' => '',
-    'name' => 'green_job',
+    'name' => 'job_admin_prod',
     'charset' => 'utf8mb4',
 ];
