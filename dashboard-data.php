@@ -105,7 +105,7 @@ try {
     $columns = [
         'jumlah_lowongan_orang', 'total_pelamar', 'jabatan_clean', 'uraian_kbji_4',
         'sektor', 'industri', 'Provinsi', 'kab_kota', 'keahlian',
-        'jenis_kelamin', 'kondisi_fisik', 'kategori green',
+        'jenis_kelamin', 'kondisi', 'kategori green',
         'GTI narrow', 'Kategori GTI Narrow', 'GTI broad', 'Kategori GTI broad',
     ];
     $quoted = implode(', ', array_map(static fn(string $c): string => "`$c`", $columns));
@@ -156,7 +156,7 @@ try {
         $cities[$province][$city]['applicants'] += $applicants;
 
         add($gender[$cat], text($row['jenis_kelamin']) ?: 'Tidak diketahui', $quota);
-        add($physical[$cat], text($row['kondisi_fisik']) ?: 'Tidak diketahui', $quota);
+        add($physical[$cat], text($row['kondisi']) ?: 'Tidak diketahui', $quota);
         $jobStats[$cat][$job] ??= ['quota' => 0, 'applicants' => 0];
         $jobStats[$cat][$job]['quota'] += $quota;
         $jobStats[$cat][$job]['applicants'] += $applicants;
