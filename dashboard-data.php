@@ -104,7 +104,7 @@ try {
 
     $columns = [
         'jumlah_lowongan_orang', 'total_pelamar', 'jabatan_clean', 'uraian_kbji_4',
-        'sektor', 'industri', 'Provinsi', 'Kabkot', 'keahlian',
+        'sektor', 'industri', 'Provinsi', 'kab_kota', 'keahlian',
         'jenis_kelamin', 'kondisi_fisik', 'kategori green',
         'GTI narrow', 'Kategori GTI Narrow', 'GTI broad', 'Kategori GTI broad',
     ];
@@ -145,7 +145,7 @@ try {
         $job = text($row['uraian_kbji_4']) ?: text($row['jabatan_clean']);
         $sector = text($row['sektor']) ?: text($row['industri']);
         $province = text($row['Provinsi']) ?: 'Tidak diketahui';
-        $city = text($row['Kabkot']) ?: 'Tidak diketahui';
+        $city = text($row['kab_kota']) ?: 'Tidak diketahui';
         add($jobs[$cat], $job, $quota);
         add($sectors[$cat], $sector, $quota);
 
