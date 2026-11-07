@@ -12,7 +12,7 @@ function text(mixed $value): string
 function category(array $row): string
 {
     $values = [
-        text($row['kategori green'] ?? ''),
+        text($row['kategori_green'] ?? ''),
         text($row['Kategori GTI Narrow'] ?? ''),
         text($row['Kategori GTI broad'] ?? ''),
     ];
@@ -105,7 +105,7 @@ try {
     $columns = [
         'jumlah_lowongan_orang', 'total_pelamar', 'jabatan_clean', 'uraian_kbji_4',
         'sektor', 'industri', 'Provinsi', 'kab_kota', 'keahlian',
-        'jenis_kelamin', 'kondisi', 'kategori green',
+        'jenis_kelamin', 'kondisi', 'kategori_green',
         'GTI narrow', 'Kategori GTI Narrow', 'GTI broad', 'Kategori GTI broad',
     ];
     $quoted = implode(', ', array_map(static fn(string $c): string => "`$c`", $columns));
