@@ -115,6 +115,7 @@ try {
     ];
     $jobs = ['g' => [], 'p' => []];
     $sectors = ['g' => [], 'p' => []];
+    $sectorStats = ['g' => [], 'p' => []];
     $provinces = [];
     $cities = [];
     $skillCounts = ['g' => [], 'p' => []];
@@ -144,6 +145,22 @@ try {
         $city = text($row['kab_kota']) ?: 'Tidak diketahui';
         add($jobs[$cat], $job, $quota);
         add($sectors[$cat], $sector, $quota);
+        if ($sector !== '') {
+            $sectorStats[$cat][$sector] ??= [
+                'postings' => 0,
+                'quota' => 0,
+                'applicants' => 0,
+                'jobs' => [],
+                'provinces' => [],
+                'cities' => [],
+            ];
+            $sectorStats[$cat][$sector]['postings']++;
+            $sectorStats[$cat][$sector]['quota'] += $quota;
+            $sectorStats[$cat][$sector]['applicants'] += $applicants;
+            add($sectorStats[$cat][$sector]['jobs'], $job, $quota);
+            add($sectorStats[$cat][$sector]['provinces'], $province, $quota);
+            add($sectorStats[$cat][$sector]['cities'], $city, $quota);
+        }
 
         $provinces[$province] ??= ['g' => 0, 'p' => 0];
         $provinces[$province][$cat] += $quota;
@@ -176,6 +193,36 @@ try {
     $jobs['c'] = $combine($jobs['g'], $jobs['p']);
     $sectors['c'] = $combine($sectors['g'], $sectors['p']);
     $skillCounts['c'] = $combine($skillCounts['g'], $skillCounts['p']);
+    $sectorStats['c'] = $sectorStats['g'];
+    foreach ($sectorStats['p'] as $sector => $value) {
+        $sectorStats['c'][$sector] ??= [
+            'postings' => 0,
+            'quota' => 0,
+            'applicants' => 0,
+            'jobs' => [],
+            'provinces' => [],
+            'cities' => [],
+        ];
+        $sectorStats['c'][$sector]['postings'] += $value['postings'];
+        $sectorStats['c'][$sector]['quota'] += $value['quota'];
+        $sectorStats['c'][$sector]['applicants'] += $value['applicants'];
+        $sectorStats['c'][$sector]['jobs'] = $combine($sectorStats['c'][$sector]['jobs'], $value['jobs']);
+        $sectorStats['c'][$sector]['provinces'] = $combine($sectorStats['c'][$sector]['provinces'], $value['provinces']);
+        $sectorStats['c'][$sector]['cities'] = $combine($sectorStats['c'][$sector]['cities'], $value['cities']);
+    }
+    $sectorDetail = [];
+    foreach (['g', 'p', 'c'] as $cat) {
+        foreach ($sectorStats[$cat] as $sector => $value) {
+            $sectorDetail[$cat][$sector] = [
+                'postings' => $value['postings'],
+                'quota' => $value['quota'],
+                'applicants' => $value['applicants'],
+                'jobs' => top($value['jobs'], 5),
+                'provinces' => top($value['provinces'], 5),
+                'cities' => top($value['cities'], 5),
+            ];
+        }
+    }
 
     $PV = [];
     foreach ($provinces as $name => $value) {
@@ -302,6 +349,7 @@ try {
         'metrics' => $metrics,
         'jobs' => ['g' => top($jobs['g'], 7), 'p' => top($jobs['p'], 7), 'c' => top($jobs['c'], 7)],
         'sec' => ['g' => top($sectors['g'], 10), 'p' => top($sectors['p'], 10), 'c' => top($sectors['c'], 10)],
+        'sectorDetail' => $sectorDetail,
         'PV' => $PV,
         'KB' => $KB,
         'sk' => ['g' => top($skillCounts['g'], 7), 'p' => top($skillCounts['p'], 7), 'c' => top($skillCounts['c'], 7)],

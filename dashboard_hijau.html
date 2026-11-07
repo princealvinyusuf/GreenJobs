@@ -76,6 +76,16 @@ section{display:none;padding-top:20px}section.on{display:block}
 .mp svg{width:100%;height:auto;display:block}.mp path{stroke:var(--card);stroke-width:.8}.mp path.o{fill:var(--track)}.mp path:not(.o),.mp circle{cursor:pointer}.mp path.sel,.mp circle.sel{stroke:var(--ink);stroke-width:2}
 .mp .lg{align-items:center;margin-top:8px}.mp .lg i{display:inline-block}.side h3{font:700 16px Georgia,serif;margin:0 0 4px}.cap{font-size:13px;color:var(--mute);margin:0 0 10px}.sc .qt{font-size:12px;font-weight:700;fill:var(--mute)}
 footer{margin-top:24px;font-size:13px;color:var(--mute)}
+.detail-modal{width:min(760px,calc(100% - 28px));max-height:85vh;border:1px solid var(--line);border-radius:16px;padding:0;background:var(--card);color:var(--ink);box-shadow:0 24px 70px rgba(0,0,0,.3)}
+.detail-modal::backdrop{background:rgba(5,20,12,.62);backdrop-filter:blur(2px)}
+.md-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding:20px 22px 14px;border-bottom:1px solid var(--line)}
+.md-head h2{font:700 22px/1.25 Georgia,serif;margin:0}.md-head p{margin:4px 0 0;color:var(--mute);font-size:14px}
+.md-close{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;width:36px;height:36px;cursor:pointer;font-size:22px;line-height:1}
+.md-body{padding:18px 22px 24px;overflow:auto}.md-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.md-stat{background:var(--bg);border-radius:10px;padding:11px 12px}.md-stat span{display:block;color:var(--mute);font-size:12px}.md-stat b{font:700 23px Georgia,serif}
+.md-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.md-grid h3{font:700 15px Georgia,serif;margin:0 0 8px}
+.md-list{margin:0;padding-left:20px}.md-list li{padding:3px 0}.md-list b{float:right;margin-left:8px}
+@media (max-width:640px){.md-stats,.md-grid{grid-template-columns:1fr}.detail-modal{max-height:92vh}}
 </style>
 </head>
 <body>
@@ -153,6 +163,11 @@ footer{margin-top:24px;font-size:13px;color:var(--mute)}
 <footer>Sumber: Karirhub IPK Hijau 2025</footer>
 </main>
 
+<dialog class="detail-modal" id="detailModal" aria-labelledby="detailTitle">
+<div class="md-head"><div><h2 id="detailTitle"></h2><p id="detailSubtitle"></p></div><button class="md-close" id="detailClose" type="button" aria-label="Tutup">&times;</button></div>
+<div class="md-body" id="detailBody"></div>
+</dialog>
+
 <script src="dashboard-data.php"></script>
 <script>
 const nf=n=>n.toLocaleString('id-ID'),$=id=>document.getElementById(id);
@@ -168,7 +183,7 @@ function bars(el,items,col,noteEl,o){o=o||{};const fmt=o.fmt||nf,e=$(el);e.inner
 if(!items.length){e.innerHTML='<p class="cap">Data belum tersedia.</p>';return}const max=Math.max(1,...items.map(i=>i[1]));
 items.forEach(it=>{const r=document.createElement('div');r.className='bar focus';r.tabIndex=0;
 r.innerHTML=`<span>${it[0]}</span><div class="t"><div class="f" style="width:0;background:${col}"></div></div><span class="v">${fmt(it[1])}</span>`;
-pick(e,r,noteEl,it[2]);e.appendChild(r);requestAnimationFrame(()=>r.querySelector('.f').style.width=(it[1]/max*100)+'%')})}
+pick(e,r,noteEl,it[2]);if(o.click){const activate=r.onclick;r.onclick=()=>{activate();o.click(it)}}e.appendChild(r);requestAnimationFrame(()=>r.querySelector('.f').style.width=(it[1]/max*100)+'%')})}
 function gbars(el,items,noteEl){const e=$(el);e.innerHTML='';$(noteEl).innerHTML=DEF;
 items.forEach(it=>{const r=document.createElement('div');r.className='bar focus';r.tabIndex=0;
 r.innerHTML=`<span>${it[0]}</span><div>${[1,2].map(j=>`<div class="t" style="height:10px;margin:3px 0"><div class="f" style="width:${it[j]/55*100}%;background:var(${j==1?'--g':'--p'})"></div></div>`).join('')}</div><span class="v" style="font-size:13px">${pc(it[1])}<br>${pc(it[2])}</span>`;
@@ -216,7 +231,16 @@ const SEG3=[['g','Green murni'],['p','Green potensial'],['c','Murni + potensial'
 const jobs=window.DB_DATA?.jobs||{g:[],p:[],c:[]};
 seg('jobSeg',SEG3,'g',k=>{const d=D[k];bars('jobBars',jobs[k].map((j,i)=>[j[0],j[1],sent('Jabatan',j[0],j[1],d.kuota,d.lb,i)]),d.c,'jobNote')});
 const sec=window.DB_DATA?.sec||{g:[],p:[],c:[]};
-seg('secSeg',SEG3,'g',k=>{const d=D[k];bars('secBars',sec[k].map((x,i)=>[x[0],x[1],sent('Sektor',x[0],x[1],d.kuota,d.lb,i)]),d.c,'secNote')});
+const sectorDetail=window.DB_DATA?.sectorDetail||{g:{},p:{},c:{}};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const detailList=(title,items)=>`<div><h3>${title}</h3>${items.length?`<ol class="md-list">${items.map(x=>`<li>${esc(x[0])}<b>${nf(x[1])}</b></li>`).join('')}</ol>`:'<p class="cap">Data belum tersedia.</p>'}</div>`;
+function showSectorDetail(k,name){const v=sectorDetail[k]?.[name];if(!v)return;
+$('detailTitle').textContent=name;$('detailSubtitle').textContent=`Detail sektor · ${D[k].n}`;
+$('detailBody').innerHTML=`<div class="md-stats"><div class="md-stat"><span>Postingan</span><b>${nf(v.postings)}</b></div><div class="md-stat"><span>Kuota</span><b>${nf(v.quota)}</b></div><div class="md-stat"><span>Lamaran</span><b>${nf(v.applicants)}</b></div></div><div class="md-grid">${detailList('Jabatan teratas',v.jobs)}${detailList('Provinsi teratas',v.provinces)}${detailList('Kabupaten/kota teratas',v.cities)}</div>`;
+$('detailModal').showModal()}
+$('detailClose').onclick=()=>$('detailModal').close();
+$('detailModal').onclick=e=>{if(e.target==$('detailModal'))$('detailModal').close()};
+seg('secSeg',SEG3,'g',k=>{const d=D[k];bars('secBars',sec[k].map((x,i)=>[x[0],x[1],sent('Sektor',x[0],x[1],d.kuota,d.lb,i)]),d.c,'secNote',{click:x=>showSectorDetail(k,x[0])})});
 const PV=window.DB_DATA?.PV||[];
 const val=(r,k)=>k=='g'?r[3]:k=='p'?r[2]-r[3]:r[2];
 seg('tmSeg',SEG3,'g',k=>{const d=D[k],it=PV.map(r=>[r[0],val(r,k)]).sort((a,b)=>b[1]-a[1]).slice(0,10).map(x=>[x[0],x[1],`<b>${x[0]}</b> memiliki kuota <b>${nf(x[1])}</b>, sekitar <b>${pct(x[1],d.kuota)}</b> dari ${d.lb}.`]);
