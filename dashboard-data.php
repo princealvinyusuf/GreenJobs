@@ -103,7 +103,7 @@ try {
     ]);
 
     $columns = [
-        'quota', 'total_pelamar', 'judul_pekerjaan', 'Uraian KBJI 4', 'kbji',
+        'jumlah_lowongan_orang', 'total_pelamar', 'judul_pekerjaan', 'Uraian KBJI 4', 'kbji',
         'kbli 1 clean', 'industri', 'Provinsi', 'Kabkot', 'keahlian',
         'jenis_kelamin', 'kondisi_fisik', 'kategori green',
         'GTI narrow', 'Kategori GTI Narrow', 'GTI broad', 'Kategori GTI broad',
@@ -129,7 +129,7 @@ try {
 
     foreach ($rows as $index => $row) {
         $cat = category($row);
-        $quota = max(0, (int) ($row['quota'] ?? 0));
+        $quota = max(0, (int) ($row['jumlah_lowongan_orang'] ?? 0));
         $applicants = max(0, (int) ($row['total_pelamar'] ?? 0));
         $T['pos']++;
         $T['kuota'] += $quota;
