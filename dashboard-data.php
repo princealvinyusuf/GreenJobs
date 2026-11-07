@@ -29,7 +29,7 @@ function category(array $row): string
     }
 
     $narrow = strtolower(text($row['gti_narrow'] ?? ''));
-    $broad = strtolower(text($row['GTI broad'] ?? ''));
+    $broad = strtolower(text($row['GTI_broad'] ?? ''));
     $isYes = static fn(string $v): bool => in_array($v, ['1', 'ya', 'yes', 'true', 'y'], true);
     if ($isYes($narrow)) {
         return 'g';
@@ -106,7 +106,7 @@ try {
         'jumlah_lowongan_orang', 'total_pelamar', 'jabatan_clean', 'uraian_kbji_4',
         'sektor', 'industri', 'Provinsi', 'kab_kota', 'keahlian',
         'jenis_kelamin', 'kondisi', 'kategori_green',
-        'gti_narrow', 'kategori_gti_narrow', 'GTI broad', 'Kategori GTI broad',
+        'gti_narrow', 'kategori_gti_narrow', 'GTI_broad', 'Kategori GTI broad',
     ];
     $quoted = implode(', ', array_map(static fn(string $c): string => "`$c`", $columns));
     $rows = $pdo->query("SELECT $quoted FROM `green_job`")->fetchAll();
