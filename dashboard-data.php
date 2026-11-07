@@ -103,7 +103,7 @@ try {
     ]);
 
     $columns = [
-        'jumlah_lowongan_orang', 'total_pelamar', 'jabatan_clean', 'uraian_kbji_4', 'kbji',
+        'jumlah_lowongan_orang', 'total_pelamar', 'jabatan_clean', 'uraian_kbji_4',
         'kbli 1 clean', 'industri', 'Provinsi', 'Kabkot', 'keahlian',
         'jenis_kelamin', 'kondisi_fisik', 'kategori green',
         'GTI narrow', 'Kategori GTI Narrow', 'GTI broad', 'Kategori GTI broad',
@@ -142,7 +142,7 @@ try {
             continue;
         }
 
-        $job = text($row['uraian_kbji_4']) ?: (text($row['kbji']) ?: text($row['jabatan_clean']));
+        $job = text($row['uraian_kbji_4']) ?: text($row['jabatan_clean']);
         $sector = text($row['kbli 1 clean']) ?: text($row['industri']);
         $province = text($row['Provinsi']) ?: 'Tidak diketahui';
         $city = text($row['Kabkot']) ?: 'Tidak diketahui';
